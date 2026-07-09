@@ -1,0 +1,7 @@
+{
+  "name": "mills-logistica-api",
+  "private": true,
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}
