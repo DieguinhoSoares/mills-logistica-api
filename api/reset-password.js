@@ -1,11 +1,11 @@
 // api/reset-password.js
 // Gera o link de redefinição via Admin SDK (mesmo link seguro que o Firebase
-// geraria sozinho) e manda por e-mail com HTML da marca Mills via SendGrid,
+// geraria sozinho) e manda por e-mail com HTML da marca Mills via Brevo,
 // em vez do template genérico do Firebase.
 const admin = require('./_firebaseAdmin')
 const { setCors } = require('./_firebaseAdmin')
 
-const FROM_EMAIL = 'nao-responda@mills.com.br' // troque pelo e-mail verificado no SendGrid
+const FROM_EMAIL = 'nao-responda@mills.com.br' // troque pelo e-mail verificado no Brevo (Senders)
 const FROM_NAME  = 'Mills Logística'
 
 function templateHtml(link, nome) {
@@ -70,23 +70,26 @@ module.exports = async (req, res) => {
       nome = snap.exists ? (snap.data().name || '').split(' ')[0] : ''
     } catch { /* segue sem nome */ }
 
-    const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    // Brevo usa o header "api-key" (não "Authorization: Bearer" como o
+    // SendGrid) e o corpo da requisição tem um formato próprio.
+    const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+        'api-key': process.env.BREVO_API_KEY,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email }] }],
-        from: { email: FROM_EMAIL, name: FROM_NAME },
+        sender:  { email: FROM_EMAIL, name: FROM_NAME },
+        to:      [{ email }],
         subject: 'Redefinição de senha — Mills Logística',
-        content: [{ type: 'text/html', value: templateHtml(link, nome) }],
+        htmlContent: templateHtml(link, nome),
       }),
     })
 
-    if (!sgRes.ok) {
-      const body = await sgRes.text()
-      throw new Error(`Falha ao enviar e-mail via SendGrid: ${body.slice(0, 200)}`)
+    if (!brevoRes.ok) {
+      const body = await brevoRes.text()
+      throw new Error(`Falha ao enviar e-mail via Brevo: ${body.slice(0, 200)}`)
     }
 
     return res.status(200).json({ ok: true })
