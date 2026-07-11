@@ -5,7 +5,7 @@
 const admin = require('./_firebaseAdmin')
 const { setCors } = require('./_firebaseAdmin')
 
-const FROM_EMAIL = 'nao-responda@mills.com.br' // troque pelo e-mail verificado no Brevo (Senders)
+const FROM_EMAIL = 'diegosoares@hotmail.fr' // e-mail verificado como Sender no Brevo
 const FROM_NAME  = 'Mills Logística'
 
 function templateHtml(link, nome) {
